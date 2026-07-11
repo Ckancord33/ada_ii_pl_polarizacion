@@ -31,7 +31,7 @@ constraint forall(i,j in 1..m)(x[i,j] >= 0); %restriccion de positividad
 constraint forall(i in 1..m)(
     sum(j in 1..m)(x[i,j]) <= p[i]
 ); %no se pueden pasar mas personas de las que hay en un lugar
-constraint sum(i in 1..m)(sum(j in 1..m)(x[i,j])) <= maxM; %no se pueden hacer mas movimientos de los permitidos
+constraint sum(i in 1..m)(sum(j in 1..m)(x[i,j] * abs(j-i))) <= maxM; %no se pueden hacer mas movimientos de los permitidos
 constraint forall(i in 1..m)(p_mod[i] = p[i] - sum(j in 1..m)(x[i,j]) + sum(j in 1..m)(x[j,i])); %lo que sale de la opinion i llega a la opinion j
 constraint forall(i in 1..m)(x[i,i] = 0);
 
@@ -55,9 +55,16 @@ var 0.0..1.0: mediana = v[idx_mediana];
 % FUNCION OBJETIVO
 % -----------------------------
 
-var float: pol; %funcion objetivo que calcula la polarizacion
+array[1..m] of var float: pol_candidata;
 
-constraint pol = sum(i in 1..m)(p_mod[i] + abs(v[i] - mediana));
+% 1. Creamos un arreglo que calcula cuánta polarización habría si la categoría 'k' fuera la mediana.
+constraint forall(k in 1..m)(
+    pol_candidata[k] = sum(i in 1..m)( p_mod[i] * abs(v[i] - v[k]) )
+);
+
+% 2. La polarización real será simplemente el valor del escenario que corresponda al índice hallado
+var float: pol;
+constraint pol = pol_candidata[idx_mediana];
 
 % -----------------------------
 % SOLUCION Y OUTPUT
@@ -65,4 +72,10 @@ constraint pol = sum(i in 1..m)(p_mod[i] + abs(v[i] - mediana));
 
 solve minimize pol;
 
-output["Los cambios x_ij fueron: ", show(x), "\nLa polarizacion final es: ", show(pol)];
+output["Los cambios x_ij fueron:\n", show2d(x), "\nLa polarizacion final es: ", show(pol)];
+
+output["\nEl arreglo de personas modificado es: ", show(p_mod), "\nLa mediana es: ", show(mediana)];
+
+var float: costo_total = sum(i,j in 1..m)(if p[j] > 0 then x[i,j] * c[i,j] * (1 + p[i]/n) else x[i,j] * c[i,j] * (1 + p[i]/n) + ce[j] * x[i,j]  endif);
+
+output["\nEl arreglo de polarizacion candidata es: ", show(pol_candidata), "\nEl costo total es: ", show(costo_total)];
