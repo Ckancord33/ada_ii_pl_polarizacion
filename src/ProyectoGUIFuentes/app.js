@@ -165,8 +165,11 @@ function getValueTableMatrix(){
     return matrixString
 }
 
-calculatePlanBtn = document.querySelector(".calculate-plan-btn")
+const calculatePlanBtn = document.getElementById("calculate-plan-btn");
 calculatePlanBtn.addEventListener('click',async() => {
+
+    calculatePlanBtn.disabled = true;
+    calculatePlanBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="margin-right: 8px;"></i>CALCULANDO...';
 
     const n = numberPeopleInput.value
     const m = numberOpinionsInput.value
@@ -188,13 +191,19 @@ calculatePlanBtn.addEventListener('click',async() => {
             eel.process_data(contenido)(function(resp) {
                 console.log(resp);
                 updateResultsFromResponse(resp);
+                calculatePlanBtn.disabled = false;
+                calculatePlanBtn.textContent = 'CALCULAR PLAN DE CAMBIO OPTIMIZADO';
             });
         } else {
             setResultStatus('Error: Eel no está disponible en este entorno.');
+            calculatePlanBtn.disabled = false;
+            calculatePlanBtn.textContent = 'CALCULAR PLAN DE CAMBIO OPTIMIZADO';
         }
     } catch (err) {
         console.error(err);
         setResultStatus('Error inesperado: ' + err);
+        calculatePlanBtn.disabled = false;
+        calculatePlanBtn.textContent = 'CALCULAR PLAN DE CAMBIO OPTIMIZADO';
     }
 
 
@@ -349,6 +358,8 @@ function updateChart(labels, beforeData, afterData) {
         chartInstance.destroy();
     }
 
+    const maxVal = Math.max(...beforeData, ...afterData);
+    
     chartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -359,6 +370,7 @@ function updateChart(labels, beforeData, afterData) {
                     backgroundColor: '#2dd4bf',
                     borderColor: '#14b8a6',
                     borderWidth: 1,
+                    minBarLength: 4,
                     data: beforeData,
                 },
                 {
@@ -366,6 +378,7 @@ function updateChart(labels, beforeData, afterData) {
                     backgroundColor: '#fb923c',
                     borderColor: '#f97316',
                     borderWidth: 1,
+                    minBarLength: 4,
                     data: afterData,
                 },
             ],
@@ -376,8 +389,12 @@ function updateChart(labels, beforeData, afterData) {
             scales: {
                 y: {
                     beginAtZero: true,
+                    max: maxVal + 1,
                     grid: { color: '#e2e8f0' },
-                    ticks: { color: '#64748b' }
+                    ticks: { 
+                        color: '#64748b',
+                        stepSize: 1
+                    }
                 },
                 x: {
                     grid: { color: '#e2e8f0' },
@@ -402,9 +419,9 @@ function updateResultsFromResponse(response) {
     const parsed = parseMiniZincResponse(response);
 
     updateResultCard('polarization-initial', 'N/A');
-    updateResultCard('polarization-final', parsed.pol || 'N/A');
+    updateResultCard('polarization-final', parsed.pol ? Number(parsed.pol).toFixed(3) : 'N/A');
     updateResultCard('polarization-reduction', 'N/A');
-    updateResultCard('cost-total', parsed.costo_total || 'N/A');
+    updateResultCard('cost-total', parsed.costo_total ? Number(parsed.costo_total).toFixed(4) : 'N/A');
 
     const beforeArray = parseArrayString(getValueTables('.distribution-opinion-table'));
     const afterArray = parsed.p_mod ? parseArrayString(parsed.p_mod) : [];
@@ -415,9 +432,9 @@ function updateResultsFromResponse(response) {
 
     const { pArray, vArray, ceArray, cMatrix, n } = getCurrentCosts();
     const initialPolarization = calculatePolarization(pArray, vArray);
-    updateResultCard('polarization-initial', initialPolarization.toFixed(4));
+    updateResultCard('polarization-initial', initialPolarization.toFixed(3));
 
-    const reduction = parsed.pol ? (initialPolarization - Number(parsed.pol)).toFixed(4) : 'N/A';
+    const reduction = parsed.pol ? (initialPolarization - Number(parsed.pol)).toFixed(3) + " (" + ((initialPolarization - Number(parsed.pol)) / initialPolarization * 100).toFixed(3) + "%)" : 'N/A';
     updateResultCard('polarization-reduction', reduction !== 'NaN' ? reduction : 'N/A');
 
     clearResultPlanTable();
@@ -437,4 +454,64 @@ function getCurrentCosts() {
     const cMatrix = parseMatrixString(getValueTableMatrix());
     const n = pArray.reduce((sum, value) => sum + value, 0);
     return { pArray, vArray, ceArray, cMatrix, n };
+}
+
+
+// Métodos para la carga de archivos
+
+document.addEventListener('DOMContentLoaded', async () => {
+    if (typeof eel !== 'undefined') {
+        const files = await eel.get_mpl_files()();
+        const select = document.getElementById('mpl-file-select');
+        files.forEach(f => {
+            const option = document.createElement('option');
+            option.value = f;
+            option.textContent = f;
+            select.appendChild(option);
+        });
+    }
+});
+
+document.getElementById('load-mpl-btn').addEventListener('click', async () => {
+    const select = document.getElementById('mpl-file-select');
+    if (!select.value) return;
+    
+    const response = await eel.read_mpl_file(select.value)();
+    if (response.status === 'success') {
+        const d = response.data;
+        numberPeopleInput.value = d.n;
+        numberOpinionsInput.value = d.m;
+        
+        numberOpinionsInput.dispatchEvent(new Event('change'));
+        
+        setTimeout(() => {
+            fillTableInputs('.distribution-opinion-table', d.p);
+            fillTableInputs('.value-opinion-table', d.v);
+            fillTableInputs('.costoe-opinion-table', d.ce);
+            
+            const cRows = document.querySelectorAll('.costos-opinion-table tr');
+            Array.from(cRows).forEach((tr, i) => {
+                const inputs = tr.querySelectorAll('input');
+                inputs.forEach((input, j) => {
+                    input.value = d.c[i][j];
+                });
+            });
+            
+            totalCostInput.value = d.ct;
+            numberMaxInput.value = d.max_movs;
+        }, 100);
+    } else {
+        alert("Error cargando archivo: " + response.message);
+    }
+});
+
+function fillTableInputs(selector, array) {
+    const rows = document.querySelectorAll(`${selector} tbody tr`);
+    if (rows.length === 0) return;
+    const inputs = rows[0].querySelectorAll('input');
+    inputs.forEach((input, i) => {
+        if (i < array.length) {
+            input.value = array[i];
+        }
+    });
 }

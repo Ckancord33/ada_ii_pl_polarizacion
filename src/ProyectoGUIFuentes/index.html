@@ -15,6 +15,10 @@
     <main class="container">
         <section class="configuracion">
             <h4>CONFIGURACIÓN</h4>
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <select id="mpl-file-select" style="flex: 1; padding: 10px 12px; border-radius: 6px; border: 1px solid var(--border-color); color: var(--text-primary); font-family: inherit; font-size: 0.9rem;"></select>
+                <button id="load-mpl-btn" class="calculate-plan-btn" style="margin-top: 0; width: auto; padding: 10px 16px;"><i class="fa-solid fa-file-import" style="margin-right: 6px;"></i>Cargar</button>
+            </div>
             <div action="">
                 <div>
                     <p>1. Datos Generales</p>
@@ -61,7 +65,7 @@
                 </div>
                 
 
-                <button class="calculate-plan-btn" >CALCULAR PLAN DE CAMBIO OPTIMIZADO</button>
+                <button id="calculate-plan-btn" class="calculate-plan-btn" >CALCULAR PLAN DE CAMBIO OPTIMIZADO</button>
             </div>
         </section>
         <section class="resultados empty-state">

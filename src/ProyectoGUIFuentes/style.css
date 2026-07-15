@@ -75,7 +75,6 @@ header h3 {
     gap: 25px;
     flex: 1;
     overflow: hidden;
-    align-items: start; /* DYNAMIC HEIGHT - prevents stretching vertically */
 }
 
 @media (max-width: 1024px) {
@@ -91,7 +90,8 @@ header h3 {
     padding: 20px 24px;
     display: flex;
     flex-direction: column;
-    max-height: 100%; /* Important to allow scrolling if too long */
+    height: fit-content;
+    max-height: 100%;
     overflow-y: auto;
     overflow-x: hidden;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); /* minimal shadow */
@@ -104,9 +104,10 @@ header h3 {
     padding: 20px 24px;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto auto 1fr;
+    grid-template-rows: auto auto auto auto;
     column-gap: 25px;
     row-gap: 15px;
+    height: fit-content;
     max-height: 100%;
     overflow-y: auto;
     overflow-x: hidden;
@@ -135,7 +136,8 @@ header h3 {
     align-items: center;
     justify-content: center;
     grid-column: 1 / -1;
-    min-height: 350px;
+    min-height: 150px;
+    padding: 20px 0;
     color: var(--text-secondary);
     text-align: center;
 }
@@ -336,7 +338,6 @@ table input[type="number"]:focus {
 #polarization-final { color: var(--accent-green); }
 
 .result-plan {
-    flex: 1;
     display: flex;
     flex-direction: column;
     min-height: 0;
@@ -398,4 +399,4 @@ table input[type="number"]:focus {
     width: 100% !important;
     height: 100% !important;
     max-height: 100%;
-}
+}
