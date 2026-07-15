@@ -65,68 +65,50 @@
         </section>
         <section class="resultados">
             <h4>RESULTADOS Y VISUALIZACIÓN</h4>
-            <div>
-                <div>
-                    <h4>Plan de cambio optimizado</h4>
-                    <h4>Resultados de la simulación</h4>
+            <div class="result-status" id="result-status">
+                <p><strong>Estado:</strong> Vacío. Aún no se ha calculado nada.</p>
+            </div>
+            <div class="result-cards" id="result-cards">
+                <div class="result-card">
+                    <p>Polarización inicial</p>
+                    <p id="polarization-initial">Vacío</p>
                 </div>
-                <div>
-                    <div>
-                        <p>Polarización inicial</p>
-                        <p>0.68</p>
-                    </div>
-                    <div>
-                        <p>Polarizacion Final (optimizada)</p>
-                        <p>0.68</p>
-                    </div>
-                    <div>
-                        <p>Reducción Lograda</p>
-                        <p>0.68</p>
-                    </div>
-                    <div>
-                        <p>Costo Total Utilizado</p>
-                        <p>0.68</p>
-                    </div>
-                    <div>
-                        <p>Personas Movidas</p>
-                        <p>0.68</p>
-                    </div>
+                <div class="result-card">
+                    <p>Polarización Final (optimizada)</p>
+                    <p id="polarization-final">Vacío</p>
                 </div>
+                <div class="result-card">
+                    <p>Reducción Lograda</p>
+                    <p id="polarization-reduction">Vacío</p>
+                </div>
+                <div class="result-card">
+                    <p>Costo Total Utilizado</p>
+                    <p id="cost-total">Vacío</p>
+                </div>
+                <div class="result-card">
+                    <p>Personas Movidas</p>
+                    <p id="people-moved">Vacío</p>
+                </div>
+            </div>
 
-                <div>
-                    <table>
+            <div class="result-plan" id="result-plan">
+                <h4>Plan de cambio optimizado</h4>
+                <table id="result-plan-table" border="1">
+                    <thead>
                         <tr>
                             <th>Opinión Origen</th>
                             <th>Opinión Destino</th>
                             <th>Personas a Cambiar</th>
                             <th>Costo Parcial</th>
                         </tr>
-                        <tr>
-                            <td>01</td>
-                            <td>02</td>
-                            <td>10</td>
-                            <td>100</td>
-                        </tr>
-                        <tr>
-                            <td>01</td>
-                            <td>03</td>
-                            <td>10</td>
-                            <td>100</td>
-                        </tr>
-                        <tr>
-                            <td>01</td>
-                            <td>04</td>
-                            <td>10</td>
-                            <td>100</td>
-                        </tr>
-                    </table>
-                </div>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
 
-                <div>
-                    <p> Distribución de opiniónes antes vs después</p>
-
-                </div>
-
+            <div class="result-graph">
+                <h4>Distribución de opiniones antes vs después</h4>
+                <canvas id="polarization-chart"></canvas>
             </div>
         </section>
     </main>
