@@ -1,0 +1,24 @@
+.body{
+    margin: 0;
+    padding: 0;
+}
+
+.container{
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: 1fr;
+    grid-column-gap: 0px;
+    grid-row-gap: 0px;
+}
+
+.configuracion{
+    grid-area: 1 / 1 / 2 / 2;
+    background-color: #f0f0f0;
+    padding: 20px;
+}
+
+.resultados{
+    grid-area: 1 / 2 / 2 / 3;
+    background-color: #e0e0e0;
+    padding: 20px;
+}

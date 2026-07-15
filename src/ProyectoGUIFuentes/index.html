@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>INTERFAZ DE GESTIÓN Y OPTIMIZACIÓN DE POLARIZACIÓN DE OPINIÓN</h1>
+        <H3>Desingardor reducir la polarización social a traves de cambios de opinión estructurada</H3>
+    </header>
+    <main class="container">
+        <section class="configuracion">
+            <h4>CONFIGURACIÓN</h4>
+            <div action="">
+                <div>
+                    <p>1. Datos Generales</p>
+                    <label for="">Número de Personas</label>
+                    <input class="number-people-input" type="number" min="1" step="1" onkeypress="return event.charCode >= 48 && event.charCode <= 57" title="Numbers only" name="" id="">
+              
+                    <label for="">Número de Opiniones</label>
+                    <input class="number-opinions-input" type="number" min="1" step="1" onkeypress="return event.charCode >= 48 && event.charCode <= 57" title="Numbers only" name="" id="">
+                </div>
+                
+               
+                <div>
+                    <p>2. Distribución inicial de opiniones</p>
+                    <table class = "distribution-opinion-table" border="1">
+                    </table>
+                </div>
+                
+                <div>   
+                    <p>3. Valores de cada opinión</p>
+                    <table class = "value-opinion-table" border="1">
+                    </table>
+                </div>
+                
+                <div>   
+                    <p>4. Costos extras por opinión</p>
+                    <table class = "costoe-opinion-table" border="1">
+                    </table>
+                </div>
+                
+                <div>
+                    <p>5. Matriz de costos</p>
+                    <table class="costos-opinion-table">
+                    </table>
+                </div>
+
+                <div>
+                    <p>6. Restricciones</p>
+
+                    <label for="">Presupuesto maximo</label>
+                    <input class = "cost-total-input" type="number" min="0" onkeypress="return event.charCode >= 48 && event.charCode <= 57" title="Numbers only"  id="">
+                    
+                    <label for="">Número maximos de movimientos</label>
+                    <input class = "number-max-mov-input" type="number" min="0" step="1" onkeypress="return event.charCode >= 48 && event.charCode <= 57" title="Numbers only"  id="">
+                </div>
+                
+
+                <button class="calculate-plan-btn" >CALCULAR PLAN DE CAMBIO OPTIMIZADO</button>
+            </div>
+        </section>
+        <section class="resultados">
+            <h4>RESULTADOS Y VISUALIZACIÓN</h4>
+            <div>
+                <div>
+                    <h4>Plan de cambio optimizado</h4>
+                    <h4>Resultados de la simulación</h4>
+                </div>
+                <div>
+                    <div>
+                        <p>Polarización inicial</p>
+                        <p>0.68</p>
+                    </div>
+                    <div>
+                        <p>Polarizacion Final (optimizada)</p>
+                        <p>0.68</p>
+                    </div>
+                    <div>
+                        <p>Reducción Lograda</p>
+                        <p>0.68</p>
+                    </div>
+                    <div>
+                        <p>Costo Total Utilizado</p>
+                        <p>0.68</p>
+                    </div>
+                    <div>
+                        <p>Personas Movidas</p>
+                        <p>0.68</p>
+                    </div>
+                </div>
+
+                <div>
+                    <table>
+                        <tr>
+                            <th>Opinión Origen</th>
+                            <th>Opinión Destino</th>
+                            <th>Personas a Cambiar</th>
+                            <th>Costo Parcial</th>
+                        </tr>
+                        <tr>
+                            <td>01</td>
+                            <td>02</td>
+                            <td>10</td>
+                            <td>100</td>
+                        </tr>
+                        <tr>
+                            <td>01</td>
+                            <td>03</td>
+                            <td>10</td>
+                            <td>100</td>
+                        </tr>
+                        <tr>
+                            <td>01</td>
+                            <td>04</td>
+                            <td>10</td>
+                            <td>100</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div>
+                    <p> Distribución de opiniónes antes vs después</p>
+
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script type="text/javascript" src="/eel.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
