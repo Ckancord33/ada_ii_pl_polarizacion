@@ -205,6 +205,7 @@ function setResultStatus(message) {
     const status = document.getElementById('result-status');
     if (status) {
         status.innerHTML = `<p><strong>Estado:</strong> ${message}</p>`;
+        status.style.display = 'flex';
     }
 }
 
@@ -354,16 +355,16 @@ function updateChart(labels, beforeData, afterData) {
             labels,
             datasets: [
                 {
-                    label: 'Antes',
-                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
+                    label: 'ANTES',
+                    backgroundColor: '#2dd4bf',
+                    borderColor: '#14b8a6',
                     borderWidth: 1,
                     data: beforeData,
                 },
                 {
-                    label: 'Después',
-                    backgroundColor: 'rgba(255, 99, 132, 0.5)',
-                    borderColor: 'rgba(255, 99, 132, 1)',
+                    label: 'DESPUÉS',
+                    backgroundColor: '#fb923c',
+                    borderColor: '#f97316',
                     borderWidth: 1,
                     data: afterData,
                 },
@@ -371,14 +372,22 @@ function updateChart(labels, beforeData, afterData) {
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             scales: {
                 y: {
                     beginAtZero: true,
+                    grid: { color: '#e2e8f0' },
+                    ticks: { color: '#64748b' }
                 },
+                x: {
+                    grid: { color: '#e2e8f0' },
+                    ticks: { color: '#64748b' }
+                }
             },
             plugins: {
                 legend: {
                     position: 'top',
+                    labels: { color: '#1e293b' }
                 },
             },
         },
@@ -386,7 +395,10 @@ function updateChart(labels, beforeData, afterData) {
 }
 
 function updateResultsFromResponse(response) {
-    setResultStatus('Resultados cargados.');
+    document.querySelector('.resultados').classList.remove('empty-state');
+    const statusEl = document.getElementById('result-status');
+    if (statusEl) statusEl.style.display = 'none';
+
     const parsed = parseMiniZincResponse(response);
 
     updateResultCard('polarization-initial', 'N/A');

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -63,10 +64,11 @@
                 <button class="calculate-plan-btn" >CALCULAR PLAN DE CAMBIO OPTIMIZADO</button>
             </div>
         </section>
-        <section class="resultados">
+        <section class="resultados empty-state">
             <h4>RESULTADOS Y VISUALIZACIÓN</h4>
             <div class="result-status" id="result-status">
-                <p><strong>Estado:</strong> Vacío. Aún no se ha calculado nada.</p>
+                <i class="fa-solid fa-chart-pie empty-icon"></i>
+                <p>Vacío. Configura los parámetros y calcula un plan.</p>
             </div>
             <div class="result-cards" id="result-cards">
                 <div class="result-card">
