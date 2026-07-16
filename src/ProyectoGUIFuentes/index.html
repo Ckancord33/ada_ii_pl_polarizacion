@@ -130,6 +130,15 @@
                 <i class="fa-solid fa-clock" style="margin-right: 6px; color: var(--accent-blue);"></i>
                 <span>Tiempo de ejecución CPU: </span>
                 <strong id="cpu-time">—</strong>
+                <span id="solve-time-wrapper" style="display: none; margin-left: 14px;">
+                    <span style="color: var(--text-secondary);">Solve time: </span>
+                    <strong id="solve-time">—</strong>
+                </span>
+            </div>
+
+            <div class="result-stats-card" id="result-stats-card" style="display: none; grid-column: 1 / -1;">
+                <h4>Estadísticas del solver</h4>
+                <pre id="solver-statistics">—</pre>
             </div>
         </section>
     </main>

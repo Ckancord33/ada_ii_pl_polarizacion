@@ -14,7 +14,7 @@ def process_data(contenido: str, solver: str = 'HiGHS') -> dict:
 		with open(dzn_path, 'w', encoding='utf-8') as f:
 			f.write(contenido)
 
-		cmd = ['minizinc', '--solver', solver, 'proyecto.mzn', 'DatosProyecto.dzn']
+		cmd = ['minizinc', '--solver', solver, '--statistics', 'proyecto.mzn', 'DatosProyecto.dzn']
 		start = time.perf_counter()
 		proc = subprocess.run(cmd, cwd=src_dir, capture_output=True, text=True)
 		elapsed = time.perf_counter() - start

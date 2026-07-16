@@ -118,11 +118,13 @@ header h3 {
 .result-cards { grid-column: 1 / -1; }
 .result-plan { grid-column: 1 / 2; margin-bottom: 0 !important; }
 .result-graph { grid-column: 2 / 3; height: 100%; margin-bottom: 0 !important; }
+.result-stats-card { grid-column: 1 / -1; margin-top: 4px; }
 
 /* Empty state styling */
 .empty-state .result-cards,
 .empty-state .result-plan,
-.empty-state .result-graph {
+.empty-state .result-graph,
+.empty-state .result-stats-card {
     display: none;
 }
 
@@ -418,5 +420,50 @@ table input[type="number"]:focus {
 .result-time-card strong {
     color: var(--text-primary);
     margin-left: 4px;
+}
+
+.result-stats-card {
+    background-color: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+
+.result-stats-card h4 {
+    font-size: 0.9rem;
+    border: none;
+    margin-bottom: 10px;
+    padding-bottom: 0;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.result-stats-card h4::before {
+    content: "▼";
+    font-family: inherit;
+    font-size: 0.65rem;
+    margin-right: 6px;
+    font-weight: 600;
+    color: inherit;
+}
+
+.result-stats-card h4::after {
+    display: none;
+}
+
+.result-stats-card pre {
+    margin: 0;
+    padding: 12px;
+    border-radius: 6px;
+    background: #f8fafc;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 220px;
+    overflow: auto;
 }
 

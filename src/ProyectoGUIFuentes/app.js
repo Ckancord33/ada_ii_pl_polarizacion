@@ -298,6 +298,49 @@ function parseMiniZincResponse(response) {
     return result;
 }
 
+function extractMiniZincStatistics(response) {
+    const lines = response.split(/\r?\n/);
+    const statistics = [];
+    let insideStatistics = false;
+
+    for (const line of lines) {
+        const trimmed = line.trim();
+
+        if (!trimmed) {
+            if (insideStatistics && statistics.length > 0 && statistics[statistics.length - 1] !== '') {
+                statistics.push('');
+            }
+            continue;
+        }
+
+        if (trimmed === '%%%mzn-stat-end') {
+            insideStatistics = false;
+            continue;
+        }
+
+        if (trimmed.startsWith('%%%mzn-stat:')) {
+            insideStatistics = true;
+            statistics.push(trimmed.replace(/^%%%mzn-stat:\s*/, ''));
+            continue;
+        }
+
+        if (insideStatistics) {
+            statistics.push(trimmed);
+        }
+    }
+
+    return statistics.join('\n').trim();
+}
+
+function extractSolveTime(statisticsText) {
+    if (!statisticsText) return null;
+
+    const matches = [...statisticsText.matchAll(/solveTime=([\d.+\-eE]+)/g)];
+    if (matches.length === 0) return null;
+
+    return matches[matches.length - 1][1];
+}
+
 function parseArrayString(arrayString) {
     if (!arrayString) return [];
     return arrayString
@@ -425,6 +468,34 @@ function updateResultsFromResponse(response, instanceName) {
     document.querySelector('.resultados').classList.remove('empty-state');
     const statusEl = document.getElementById('result-status');
     if (statusEl) statusEl.style.display = 'none';
+
+    const statsPanel = document.getElementById('result-stats-card');
+    const statsContent = document.getElementById('solver-statistics');
+    const solveTimeWrapper = document.getElementById('solve-time-wrapper');
+    const solveTimeEl = document.getElementById('solve-time');
+    const statisticsText = extractMiniZincStatistics(response);
+    if (statsPanel && statsContent) {
+        if (statisticsText) {
+            statsContent.textContent = statisticsText;
+            statsPanel.style.display = 'block';
+        } else {
+            statsContent.textContent = '—';
+            statsPanel.style.display = 'none';
+        }
+    }
+
+    const solveTime = extractSolveTime(statisticsText);
+    const timeCard = document.getElementById('result-time-card');
+    if (solveTimeWrapper && solveTimeEl) {
+        if (solveTime) {
+            solveTimeEl.textContent = solveTime + ' s';
+            solveTimeWrapper.style.display = 'inline';
+            if (timeCard) timeCard.style.display = 'flex';
+        } else {
+            solveTimeEl.textContent = '—';
+            solveTimeWrapper.style.display = 'none';
+        }
+    }
 
     // Show instance name
     const instanceEl = document.getElementById('instance-name');
