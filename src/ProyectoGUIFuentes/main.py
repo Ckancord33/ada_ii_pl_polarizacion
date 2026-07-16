@@ -1,10 +1,11 @@
 import eel
 import os
 import subprocess
+import time
 
 
 @eel.expose
-def process_data(contenido: str) -> str:
+def process_data(contenido: str, solver: str = 'HiGHS') -> dict:
 	try:
 		web_dir = os.path.dirname(__file__)
 		src_dir = os.path.abspath(os.path.join(web_dir, '..'))
@@ -13,19 +14,21 @@ def process_data(contenido: str) -> str:
 		with open(dzn_path, 'w', encoding='utf-8') as f:
 			f.write(contenido)
 
-		# Ejecutar MiniZinc en la carpeta src
-		cmd = ['minizinc', '--solver', 'HiGHS', 'proyecto.mzn', 'DatosProyecto.dzn']
+		cmd = ['minizinc', '--solver', solver, 'proyecto.mzn', 'DatosProyecto.dzn']
+		start = time.perf_counter()
 		proc = subprocess.run(cmd, cwd=src_dir, capture_output=True, text=True)
+		elapsed = time.perf_counter() - start
+
 		output = ''
 		if proc.stdout:
 			output += proc.stdout
 		if proc.stderr:
 			output += '\n' + proc.stderr
-		return output
+		return {"output": output, "cpu_time": round(elapsed, 4)}
 	except FileNotFoundError as e:
-		return f"Error: ejecutable no encontrado: {e}"
+		return {"output": f"Error: ejecutable no encontrado: {e}", "cpu_time": 0}
 	except Exception as e:
-		return f"Error ejecutando proceso: {e}"
+		return {"output": f"Error ejecutando proceso: {e}", "cpu_time": 0}
 
 @eel.expose
 def get_mpl_files():

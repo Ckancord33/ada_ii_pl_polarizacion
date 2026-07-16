@@ -179,18 +179,28 @@ calculatePlanBtn.addEventListener('click',async() => {
     const v = getValueTables(".value-opinion-table")
     const ce = getValueTables(".costoe-opinion-table")
 
-    const c = getValueTableMatrix()
+    const costoMatrix = getValueTableMatrix()
 
     const ct = totalCostInput.value
 
-    const contenido = "n = " + n + ";\n" + "m = " + m + ";\n" + "maxM = " + maxM + ";\n" + "p = " + 
-    p + ";\n" + "v = " + v + ";\n" + "ce = " + ce + ";\n" + "ct = " + ct + ";\n" + "c = " + c  
-        
+    const contenido = "n = " + n + ";\n" + "m = " + m + ";\n" + "p = " + p + ";\n" + "v = " + v + ";\n" + "ce = " + ce + ";\n" + "costo = " + costoMatrix + ";\n" + "ct = " + ct + ";\n" + "MaxMovs = " + maxM + ";"
+
+    const solver = document.getElementById('solver-select').value;
+
     try {
         if (typeof eel !== 'undefined') {
-            eel.process_data(contenido)(function(resp) {
+            eel.process_data(contenido, solver)(function(resp) {
                 console.log(resp);
-                updateResultsFromResponse(resp);
+                const instanceName = document.getElementById('mpl-file-select').value || 'Manual';
+                updateResultsFromResponse(resp.output, instanceName);
+
+                const timeCard = document.getElementById('result-time-card');
+                const cpuTimeEl = document.getElementById('cpu-time');
+                if (timeCard && cpuTimeEl) {
+                    cpuTimeEl.textContent = resp.cpu_time + ' s';
+                    timeCard.style.display = 'flex';
+                }
+                
                 calculatePlanBtn.disabled = false;
                 calculatePlanBtn.textContent = 'CALCULAR PLAN DE CAMBIO OPTIMIZADO';
             });
@@ -411,10 +421,16 @@ function updateChart(labels, beforeData, afterData) {
     });
 }
 
-function updateResultsFromResponse(response) {
+function updateResultsFromResponse(response, instanceName) {
     document.querySelector('.resultados').classList.remove('empty-state');
     const statusEl = document.getElementById('result-status');
     if (statusEl) statusEl.style.display = 'none';
+
+    // Show instance name
+    const instanceEl = document.getElementById('instance-name');
+    if (instanceEl && instanceName) {
+        instanceEl.textContent = '— ' + instanceName;
+    }
 
     const parsed = parseMiniZincResponse(response);
 
