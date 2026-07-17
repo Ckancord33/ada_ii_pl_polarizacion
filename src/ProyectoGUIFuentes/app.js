@@ -220,6 +220,225 @@ calculatePlanBtn.addEventListener('click',async() => {
 })
 
 
+// Mode Selection Elements
+const modeIndividualBtn = document.getElementById("mode-individual-btn");
+const modeBatchBtn = document.getElementById("mode-batch-btn");
+const individualLoadSection = document.getElementById("individual-file-load-section");
+const individualFields = document.querySelectorAll(".individual-field");
+const batchConfigFields = document.getElementById("batch-config-fields");
+
+let latestBatchResults = [];
+let runAllOriginalContent = '';
+
+if (modeIndividualBtn && modeBatchBtn) {
+    modeIndividualBtn.addEventListener('click', () => {
+        modeIndividualBtn.classList.add('active');
+        modeBatchBtn.classList.remove('active');
+        
+        if (individualLoadSection) individualLoadSection.style.display = 'flex';
+        if (individualFields) {
+            individualFields.forEach(el => el.style.display = '');
+        }
+        if (batchConfigFields) batchConfigFields.style.display = 'none';
+        if (calculatePlanBtn) calculatePlanBtn.style.display = 'block';
+        if (runAllTestsBtn) runAllTestsBtn.style.display = 'none';
+    });
+    
+    modeBatchBtn.addEventListener('click', () => {
+        modeBatchBtn.classList.add('active');
+        modeIndividualBtn.classList.remove('active');
+        
+        if (individualLoadSection) individualLoadSection.style.display = 'none';
+        if (individualFields) {
+            individualFields.forEach(el => el.style.display = 'none');
+        }
+        if (batchConfigFields) batchConfigFields.style.display = 'block';
+        if (calculatePlanBtn) calculatePlanBtn.style.display = 'none';
+        if (runAllTestsBtn) runAllTestsBtn.style.display = 'block';
+    });
+}
+
+if (typeof eel !== 'undefined') {
+    // Expose callbacks to Python
+    eel.expose(on_test_started);
+    function on_test_started(filename) {
+        const tbody = document.querySelector('#batch-results-table tbody');
+        if (!tbody) return;
+        
+        const tr = document.createElement('tr');
+        tr.id = 'batch-row-' + filename.replace(/[^a-zA-Z0-9]/g, '_');
+        
+        const tdInst = document.createElement('td');
+        tdInst.textContent = filename;
+        tr.appendChild(tdInst);
+        
+        const tdPol = document.createElement('td');
+        tdPol.textContent = '—';
+        tr.appendChild(tdPol);
+        
+        const tdCpu = document.createElement('td');
+        tdCpu.textContent = '—';
+        tr.appendChild(tdCpu);
+        
+        const tdSolve = document.createElement('td');
+        tdSolve.textContent = '—';
+        tr.appendChild(tdSolve);
+        
+        const tdEst = document.createElement('td');
+        tdEst.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="margin-right: 6px; color: #D97706;"></i> Ejecutando...';
+        tdEst.style.color = '#D97706';
+        tdEst.style.fontWeight = '600';
+        tr.appendChild(tdEst);
+        
+        tbody.appendChild(tr);
+        
+        // Auto-scroll inside table container if it overflows
+        const tableContainer = tbody.parentElement ? tbody.parentElement.parentElement : null;
+        if (tableContainer) {
+            tableContainer.scrollTop = tableContainer.scrollHeight;
+        }
+    }
+    
+    eel.expose(on_test_completed);
+    function on_test_completed(res) {
+        latestBatchResults.push(res);
+        
+        const rowId = 'batch-row-' + res.instancia.replace(/[^a-zA-Z0-9]/g, '_');
+        const tr = document.getElementById(rowId);
+        if (!tr) return;
+        
+        // Update columns
+        const cells = tr.querySelectorAll('td');
+        if (cells.length >= 5) {
+            cells[1].textContent = res.polarizacion !== null ? res.polarizacion.toFixed(4) : '—';
+            cells[2].textContent = res.tiempo_ejecucion_cpu.toFixed(3) + ' s';
+            cells[3].textContent = res.tiempo_solve !== null ? res.tiempo_solve.toFixed(3) + ' s' : '—';
+            
+            const tdEst = cells[4];
+            tdEst.textContent = res.estado;
+            if (res.estado === 'Timeout') {
+                tdEst.style.color = '#EF4444';
+                tdEst.style.fontWeight = 'bold';
+            } else if (res.estado === 'Error') {
+                tdEst.style.color = '#EF4444';
+                tdEst.style.fontWeight = 'bold';
+            } else {
+                tdEst.style.color = 'var(--accent-green)';
+                tdEst.style.fontWeight = 'bold';
+            }
+        }
+    }
+    
+    eel.expose(on_batch_finished);
+    function on_batch_finished(resp) {
+        if (runAllTestsBtn) {
+            runAllTestsBtn.disabled = false;
+            if (runAllOriginalContent) {
+                runAllTestsBtn.innerHTML = runAllOriginalContent;
+            }
+        }
+        if (calculatePlanBtn) {
+            calculatePlanBtn.disabled = false;
+        }
+        
+        if (resp && resp.status === 'success') {
+            alert(`Pruebas completadas exitosamente.\nSe procesaron ${resp.count} instancias.`);
+        } else if (resp && resp.status === 'error') {
+            alert('Error al ejecutar pruebas: ' + resp.message);
+        }
+    }
+}
+
+const runAllTestsBtn = document.getElementById("run-all-tests-btn");
+if (runAllTestsBtn) {
+    runAllTestsBtn.addEventListener('click', async () => {
+        runAllTestsBtn.disabled = true;
+        if (calculatePlanBtn) calculatePlanBtn.disabled = true;
+        
+        runAllOriginalContent = runAllTestsBtn.innerHTML;
+        runAllTestsBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="margin-right: 8px;"></i>EJECUTANDO PRUEBAS...';
+
+        const solver = document.getElementById('solver-select').value;
+        const timeoutSeconds = parseFloat(document.getElementById('batch-timeout-input').value) || 30.0;
+        
+        // Clear and show batch view
+        latestBatchResults = [];
+        const resultadosEl = document.querySelector('.resultados');
+        if (resultadosEl) {
+            resultadosEl.classList.remove('empty-state');
+            resultadosEl.classList.remove('show-single');
+            resultadosEl.classList.add('show-batch');
+        }
+        
+        const tbody = document.querySelector('#batch-results-table tbody');
+        if (tbody) {
+            tbody.innerHTML = '';
+        }
+
+        try {
+            if (typeof eel !== 'undefined') {
+                eel.start_batch_tests(solver, timeoutSeconds);
+            } else {
+                alert('Error: Eel no está disponible en este entorno.');
+                runAllTestsBtn.disabled = false;
+                if (calculatePlanBtn) calculatePlanBtn.disabled = false;
+                runAllTestsBtn.innerHTML = runAllOriginalContent;
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Error inesperado: ' + err);
+            runAllTestsBtn.disabled = false;
+            if (calculatePlanBtn) calculatePlanBtn.disabled = false;
+            runAllTestsBtn.innerHTML = runAllOriginalContent;
+        }
+    });
+}
+
+const copyJsonBtn = document.getElementById("copy-json-btn");
+if (copyJsonBtn) {
+    copyJsonBtn.addEventListener('click', async () => {
+        if (!latestBatchResults || latestBatchResults.length === 0) {
+            alert('No hay resultados para copiar.');
+            return;
+        }
+        
+        const solver = document.getElementById('solver-select').value;
+        const timeoutSeconds = parseFloat(document.getElementById('batch-timeout-input').value) || 30.0;
+        
+        const filtered = latestBatchResults.map(res => ({
+            instancia: res.instancia,
+            polarizacion: res.polarizacion,
+            tiempo_ejecucion_cpu: res.tiempo_ejecucion_cpu,
+            tiempo_solve: res.tiempo_solve
+        }));
+        
+        const outputJson = {
+            solver: solver,
+            tiempo_maximo_por_test: timeoutSeconds,
+            resultados: filtered
+        };
+        
+        const jsonText = JSON.stringify(outputJson, null, 4);
+        
+        try {
+            await navigator.clipboard.writeText(jsonText);
+            const originalHTML = copyJsonBtn.innerHTML;
+            copyJsonBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> ¡Copiado!';
+            copyJsonBtn.style.backgroundColor = 'var(--accent-green)';
+            copyJsonBtn.disabled = true;
+            setTimeout(() => {
+                copyJsonBtn.innerHTML = originalHTML;
+                copyJsonBtn.style.backgroundColor = '';
+                copyJsonBtn.disabled = false;
+            }, 2000);
+        } catch (err) {
+            console.error(err);
+            alert('Error al copiar al portapapeles: ' + err);
+        }
+    });
+}
+
+
 function setResultStatus(message) {
     const status = document.getElementById('result-status');
     if (status) {
@@ -465,7 +684,10 @@ function updateChart(labels, beforeData, afterData) {
 }
 
 function updateResultsFromResponse(response, instanceName) {
-    document.querySelector('.resultados').classList.remove('empty-state');
+    const resultadosEl = document.querySelector('.resultados');
+    resultadosEl.classList.remove('empty-state');
+    resultadosEl.classList.remove('show-batch');
+    resultadosEl.classList.add('show-single');
     const statusEl = document.getElementById('result-status');
     if (statusEl) statusEl.style.display = 'none';
 
