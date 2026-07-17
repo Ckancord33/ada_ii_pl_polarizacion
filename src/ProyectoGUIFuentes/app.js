@@ -763,10 +763,6 @@ function updateResultsFromResponse(response, instanceName, cpuTime) {
 
     const beforeArray = parseArrayString(getValueTables('.distribution-opinion-table'));
     const afterArray = parsed.p_mod ? parseArrayString(parsed.p_mod) : [];
-    const moved = beforeArray.length === afterArray.length
-        ? beforeArray.reduce((sum, val, idx) => sum + Math.max(0, val - afterArray[idx]), 0)
-        : 'N/A';
-    updateResultCard('people-moved', moved);
 
     const { pArray, vArray, ceArray, cMatrix, n } = getCurrentCosts();
     const initialPolarization = calculatePolarization(pArray, vArray);
@@ -776,10 +772,13 @@ function updateResultsFromResponse(response, instanceName, cpuTime) {
     updateResultCard('polarization-reduction', reduction !== 'NaN' ? reduction : 'N/A');
 
     clearResultPlanTable();
+    let moved = 'N/A';
     if (parsed.x) {
         const moves = formatPlanFromX(parsed.x, pArray, cMatrix, ceArray, n);
         moves.forEach((move) => addResultPlanRow(move.origin, move.target, move.people, move.cost));
+        moved = moves.reduce((sum, move) => sum + move.people, 0);
     }
+    updateResultCard('people-moved', moved);
 
     const labels = beforeArray.map((_, index) => 'Op ' + (index + 1));
     updateChart(labels, beforeArray, afterArray);
