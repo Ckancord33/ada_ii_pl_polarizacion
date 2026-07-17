@@ -192,7 +192,7 @@ calculatePlanBtn.addEventListener('click',async() => {
             eel.process_data(contenido, solver)(function(resp) {
                 console.log(resp);
                 const instanceName = document.getElementById('mpl-file-select').value || 'Manual';
-                updateResultsFromResponse(resp.output, instanceName);
+                updateResultsFromResponse(resp.output, instanceName, resp.cpu_time);
 
                 const timeCard = document.getElementById('result-time-card');
                 const cpuTimeEl = document.getElementById('cpu-time');
@@ -228,6 +228,7 @@ const individualFields = document.querySelectorAll(".individual-field");
 const batchConfigFields = document.getElementById("batch-config-fields");
 
 let latestBatchResults = [];
+let latestIndividualResult = null;
 let runAllOriginalContent = '';
 
 if (modeIndividualBtn && modeBatchBtn) {
@@ -430,6 +431,34 @@ if (copyJsonBtn) {
                 copyJsonBtn.innerHTML = originalHTML;
                 copyJsonBtn.style.backgroundColor = '';
                 copyJsonBtn.disabled = false;
+            }, 2000);
+        } catch (err) {
+            console.error(err);
+            alert('Error al copiar al portapapeles: ' + err);
+        }
+    });
+}
+
+const copyIndividualJsonBtn = document.getElementById("copy-individual-json-btn");
+if (copyIndividualJsonBtn) {
+    copyIndividualJsonBtn.addEventListener('click', async () => {
+        if (!latestIndividualResult) {
+            alert('No hay resultados para copiar.');
+            return;
+        }
+        
+        const jsonText = JSON.stringify(latestIndividualResult, null, 4);
+        
+        try {
+            await navigator.clipboard.writeText(jsonText);
+            const originalHTML = copyIndividualJsonBtn.innerHTML;
+            copyIndividualJsonBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> ¡Copiado!';
+            copyIndividualJsonBtn.style.backgroundColor = 'var(--accent-green)';
+            copyIndividualJsonBtn.disabled = true;
+            setTimeout(() => {
+                copyIndividualJsonBtn.innerHTML = originalHTML;
+                copyIndividualJsonBtn.style.backgroundColor = '';
+                copyIndividualJsonBtn.disabled = false;
             }, 2000);
         } catch (err) {
             console.error(err);
@@ -683,7 +712,7 @@ function updateChart(labels, beforeData, afterData) {
     });
 }
 
-function updateResultsFromResponse(response, instanceName) {
+function updateResultsFromResponse(response, instanceName, cpuTime) {
     const resultadosEl = document.querySelector('.resultados');
     resultadosEl.classList.remove('empty-state');
     resultadosEl.classList.remove('show-batch');
@@ -754,6 +783,39 @@ function updateResultsFromResponse(response, instanceName) {
 
     const labels = beforeArray.map((_, index) => 'Op ' + (index + 1));
     updateChart(labels, beforeArray, afterArray);
+
+    // Save individual results as JSON object
+    latestIndividualResult = {
+        configuracion: {
+            instancia: instanceName,
+            solver: document.getElementById('solver-select').value,
+            numero_personas: n,
+            numero_opiniones: pArray.length,
+            presupuesto_maximo: Number(document.querySelector('.cost-total-input')?.value || 0),
+            max_movimientos: Number(document.querySelector('.number-max-mov-input')?.value || 0),
+            distribucion_inicial: pArray,
+            valores_opinion: vArray,
+            costos_extra: ceArray,
+            matriz_costos: cMatrix
+        },
+        resultados: {
+            polarizacion_inicial: Number(initialPolarization.toFixed(3)),
+            polarizacion_final: parsed.pol ? Number(Number(parsed.pol).toFixed(3)) : null,
+            reduccion_lograda: parsed.pol ? Number((initialPolarization - Number(parsed.pol)).toFixed(3)) : null,
+            reduccion_porcentaje: parsed.pol ? Number(((initialPolarization - Number(parsed.pol)) / initialPolarization * 100).toFixed(3)) : null,
+            costo_total_utilizado: parsed.costo_total ? Number(Number(parsed.costo_total).toFixed(4)) : null,
+            personas_movidas: moved !== 'N/A' ? moved : null,
+            tiempo_ejecucion_cpu: cpuTime !== undefined ? Number(cpuTime) : null,
+            tiempo_solve: solveTime ? Number(solveTime) : null,
+            plan_cambio: parsed.x ? formatPlanFromX(parsed.x, pArray, cMatrix, ceArray, n).map(move => ({
+                opinion_origen: move.origin,
+                opinion_destino: move.target,
+                personas_a_cambiar: move.people,
+                costo_parcial: Number(move.cost)
+            })) : [],
+            estadisticas_solver: statisticsText || null
+        }
+    };
 }
 
 function getCurrentCosts() {

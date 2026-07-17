@@ -341,6 +341,14 @@ input[type="number"]:focus {
     display: none !important;
 }
 
+#copy-individual-json-btn {
+    display: none;
+}
+
+.resultados.show-single #copy-individual-json-btn {
+    display: flex;
+}
+
 /* Tables */
 table {
     width: 100%;
