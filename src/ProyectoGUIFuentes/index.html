@@ -15,12 +15,19 @@
     <main class="container">
         <section class="configuracion">
             <h4>CONFIGURACIÓN</h4>
-            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+            
+            <div class="mode-tabs">
+                <button id="mode-individual-btn" class="mode-tab-btn active">Optimización Individual</button>
+                <button id="mode-batch-btn" class="mode-tab-btn">Pruebas por Lotes</button>
+            </div>
+
+            <div id="individual-file-load-section" style="display: flex; gap: 10px; margin-bottom: 20px;">
                 <select id="mpl-file-select" style="flex: 1; padding: 10px 12px; border-radius: 6px; border: 1px solid var(--border-color); color: var(--text-primary); font-family: inherit; font-size: 0.9rem;"></select>
                 <button id="load-mpl-btn" class="calculate-plan-btn" style="margin-top: 0; width: auto; padding: 10px 16px;"><i class="fa-solid fa-file-import" style="margin-right: 6px;"></i>Cargar</button>
             </div>
+            
             <div action="">
-                <div>
+                <div class="individual-field">
                     <p>1. Datos Generales</p>
                     <label for="">Número de Personas</label>
                     <input class="number-people-input" type="number" min="1" step="1" onkeypress="return event.charCode >= 48 && event.charCode <= 57" title="Numbers only" name="" id="">
@@ -30,31 +37,31 @@
                 </div>
                 
                
-                <div>
+                <div class="individual-field">
                     <p>2. Distribución inicial de opiniones</p>
                     <table class = "distribution-opinion-table" border="1">
                     </table>
                 </div>
                 
-                <div>   
+                <div class="individual-field">   
                     <p>3. Valores de cada opinión</p>
                     <table class = "value-opinion-table" border="1">
                     </table>
                 </div>
                 
-                <div>   
+                <div class="individual-field">   
                     <p>4. Costos extras por opinión</p>
                     <table class = "costoe-opinion-table" border="1">
                     </table>
                 </div>
                 
-                <div>
+                <div class="individual-field">
                     <p>5. Matriz de costos</p>
                     <table class="costos-opinion-table">
                     </table>
                 </div>
 
-                <div>
+                <div class="individual-field">
                     <p>6. Restricciones</p>
 
                     <label for="">Presupuesto maximo</label>
@@ -62,6 +69,12 @@
                     
                     <label for="">Número maximos de movimientos</label>
                     <input class = "number-max-mov-input" type="number" min="0" step="1" onkeypress="return event.charCode >= 48 && event.charCode <= 57" title="Numbers only"  id="">
+                </div>
+
+                <div id="batch-config-fields" style="display: none; margin-bottom: 20px;">
+                    <p>Configuración de Lote</p>
+                    <label for="batch-timeout-input" style="display: block; margin-bottom: 6px;">Límite de tiempo por prueba (segundos)</label>
+                    <input id="batch-timeout-input" type="number" min="1" step="1" value="30">
                 </div>
                 
 
@@ -75,10 +88,16 @@
                 </div>
 
                 <button id="calculate-plan-btn" class="calculate-plan-btn" >CALCULAR PLAN DE CAMBIO OPTIMIZADO</button>
+                <button id="run-all-tests-btn" class="calculate-plan-btn run-all-btn" style="display: none;"><i class="fa-solid fa-vials" style="margin-right: 8px;"></i>EJECUTAR TODAS LAS PRUEBAS</button>
             </div>
         </section>
         <section class="resultados empty-state">
-            <h4>RESULTADOS Y VISUALIZACIÓN <span id="instance-name" style="font-size: 0.7rem; font-weight: 500; color: var(--text-secondary); margin-left: 8px;"></span></h4>
+            <h4>
+                <span>RESULTADOS Y VISUALIZACIÓN <span id="instance-name" style="font-size: 0.7rem; font-weight: 500; color: var(--text-secondary); margin-left: 8px;"></span></span>
+                <button id="copy-individual-json-btn" class="calculate-plan-btn" style="width: auto; margin-top: 0; padding: 8px 16px; background-color: var(--accent-blue); align-items: center; gap: 8px; margin-left: auto;">
+                    <i class="fa-solid fa-copy"></i>Copiar JSON
+                </button>
+            </h4>
             <div class="result-status" id="result-status">
                 <i class="fa-solid fa-chart-pie empty-icon"></i>
                 <p>Vacío. Configura los parámetros y calcula un plan.</p>
@@ -130,6 +149,40 @@
                 <i class="fa-solid fa-clock" style="margin-right: 6px; color: var(--accent-blue);"></i>
                 <span>Tiempo de ejecución CPU: </span>
                 <strong id="cpu-time">—</strong>
+                <span id="solve-time-wrapper" style="display: none; margin-left: 14px;">
+                    <span style="color: var(--text-secondary);">Solve time: </span>
+                    <strong id="solve-time">—</strong>
+                </span>
+            </div>
+
+            <div class="result-stats-card" id="result-stats-card" style="display: none; grid-column: 1 / -1;">
+                <h4>Estadísticas del solver</h4>
+                <pre id="solver-statistics">—</pre>
+            </div>
+
+            <div class="batch-run-results" id="batch-run-results">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 15px;">
+                    <h4 style="margin: 0; border: none; padding: 0;">RESULTADOS POR LOTES</h4>
+                    <button id="copy-json-btn" class="calculate-plan-btn" style="width: auto; margin-top: 0; padding: 8px 16px; background-color: var(--accent-blue); display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-copy"></i>Copiar JSON
+                    </button>
+                </div>
+                <div style="overflow-x: auto; max-height: 450px; border: 1px solid var(--border-color); border-radius: 6px;">
+                    <table id="batch-results-table" style="max-height: 100%; border: none; width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>Instancia</th>
+                                <th>Polarización Final</th>
+                                <th>Tiempo CPU (s)</th>
+                                <th>Tiempo Solve (s)</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Filas dinámicas -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
     </main>

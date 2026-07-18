@@ -192,7 +192,7 @@ calculatePlanBtn.addEventListener('click',async() => {
             eel.process_data(contenido, solver)(function(resp) {
                 console.log(resp);
                 const instanceName = document.getElementById('mpl-file-select').value || 'Manual';
-                updateResultsFromResponse(resp.output, instanceName);
+                updateResultsFromResponse(resp.output, instanceName, resp.cpu_time);
 
                 const timeCard = document.getElementById('result-time-card');
                 const cpuTimeEl = document.getElementById('cpu-time');
@@ -218,6 +218,254 @@ calculatePlanBtn.addEventListener('click',async() => {
 
 
 })
+
+
+// Mode Selection Elements
+const modeIndividualBtn = document.getElementById("mode-individual-btn");
+const modeBatchBtn = document.getElementById("mode-batch-btn");
+const individualLoadSection = document.getElementById("individual-file-load-section");
+const individualFields = document.querySelectorAll(".individual-field");
+const batchConfigFields = document.getElementById("batch-config-fields");
+
+let latestBatchResults = [];
+let latestIndividualResult = null;
+let runAllOriginalContent = '';
+
+if (modeIndividualBtn && modeBatchBtn) {
+    modeIndividualBtn.addEventListener('click', () => {
+        modeIndividualBtn.classList.add('active');
+        modeBatchBtn.classList.remove('active');
+        
+        if (individualLoadSection) individualLoadSection.style.display = 'flex';
+        if (individualFields) {
+            individualFields.forEach(el => el.style.display = '');
+        }
+        if (batchConfigFields) batchConfigFields.style.display = 'none';
+        if (calculatePlanBtn) calculatePlanBtn.style.display = 'block';
+        if (runAllTestsBtn) runAllTestsBtn.style.display = 'none';
+    });
+    
+    modeBatchBtn.addEventListener('click', () => {
+        modeBatchBtn.classList.add('active');
+        modeIndividualBtn.classList.remove('active');
+        
+        if (individualLoadSection) individualLoadSection.style.display = 'none';
+        if (individualFields) {
+            individualFields.forEach(el => el.style.display = 'none');
+        }
+        if (batchConfigFields) batchConfigFields.style.display = 'block';
+        if (calculatePlanBtn) calculatePlanBtn.style.display = 'none';
+        if (runAllTestsBtn) runAllTestsBtn.style.display = 'block';
+    });
+}
+
+if (typeof eel !== 'undefined') {
+    // Expose callbacks to Python
+    eel.expose(on_test_started);
+    function on_test_started(filename) {
+        const tbody = document.querySelector('#batch-results-table tbody');
+        if (!tbody) return;
+        
+        const tr = document.createElement('tr');
+        tr.id = 'batch-row-' + filename.replace(/[^a-zA-Z0-9]/g, '_');
+        
+        const tdInst = document.createElement('td');
+        tdInst.textContent = filename;
+        tr.appendChild(tdInst);
+        
+        const tdPol = document.createElement('td');
+        tdPol.textContent = '—';
+        tr.appendChild(tdPol);
+        
+        const tdCpu = document.createElement('td');
+        tdCpu.textContent = '—';
+        tr.appendChild(tdCpu);
+        
+        const tdSolve = document.createElement('td');
+        tdSolve.textContent = '—';
+        tr.appendChild(tdSolve);
+        
+        const tdEst = document.createElement('td');
+        tdEst.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="margin-right: 6px; color: #D97706;"></i> Ejecutando...';
+        tdEst.style.color = '#D97706';
+        tdEst.style.fontWeight = '600';
+        tr.appendChild(tdEst);
+        
+        tbody.appendChild(tr);
+        
+        // Auto-scroll inside table container if it overflows
+        const tableContainer = tbody.parentElement ? tbody.parentElement.parentElement : null;
+        if (tableContainer) {
+            tableContainer.scrollTop = tableContainer.scrollHeight;
+        }
+    }
+    
+    eel.expose(on_test_completed);
+    function on_test_completed(res) {
+        latestBatchResults.push(res);
+        
+        const rowId = 'batch-row-' + res.instancia.replace(/[^a-zA-Z0-9]/g, '_');
+        const tr = document.getElementById(rowId);
+        if (!tr) return;
+        
+        // Update columns
+        const cells = tr.querySelectorAll('td');
+        if (cells.length >= 5) {
+            cells[1].textContent = res.polarizacion !== null ? res.polarizacion.toFixed(4) : '—';
+            cells[2].textContent = res.tiempo_ejecucion_cpu.toFixed(3) + ' s';
+            cells[3].textContent = res.tiempo_solve !== null ? res.tiempo_solve.toFixed(3) + ' s' : '—';
+            
+            const tdEst = cells[4];
+            tdEst.textContent = res.estado;
+            if (res.estado === 'Timeout') {
+                tdEst.style.color = '#EF4444';
+                tdEst.style.fontWeight = 'bold';
+            } else if (res.estado === 'Error') {
+                tdEst.style.color = '#EF4444';
+                tdEst.style.fontWeight = 'bold';
+            } else {
+                tdEst.style.color = 'var(--accent-green)';
+                tdEst.style.fontWeight = 'bold';
+            }
+        }
+    }
+    
+    eel.expose(on_batch_finished);
+    function on_batch_finished(resp) {
+        if (runAllTestsBtn) {
+            runAllTestsBtn.disabled = false;
+            if (runAllOriginalContent) {
+                runAllTestsBtn.innerHTML = runAllOriginalContent;
+            }
+        }
+        if (calculatePlanBtn) {
+            calculatePlanBtn.disabled = false;
+        }
+        
+        if (resp && resp.status === 'success') {
+            alert(`Pruebas completadas exitosamente.\nSe procesaron ${resp.count} instancias.`);
+        } else if (resp && resp.status === 'error') {
+            alert('Error al ejecutar pruebas: ' + resp.message);
+        }
+    }
+}
+
+const runAllTestsBtn = document.getElementById("run-all-tests-btn");
+if (runAllTestsBtn) {
+    runAllTestsBtn.addEventListener('click', async () => {
+        runAllTestsBtn.disabled = true;
+        if (calculatePlanBtn) calculatePlanBtn.disabled = true;
+        
+        runAllOriginalContent = runAllTestsBtn.innerHTML;
+        runAllTestsBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="margin-right: 8px;"></i>EJECUTANDO PRUEBAS...';
+
+        const solver = document.getElementById('solver-select').value;
+        const timeoutSeconds = parseFloat(document.getElementById('batch-timeout-input').value) || 30.0;
+        
+        // Clear and show batch view
+        latestBatchResults = [];
+        const resultadosEl = document.querySelector('.resultados');
+        if (resultadosEl) {
+            resultadosEl.classList.remove('empty-state');
+            resultadosEl.classList.remove('show-single');
+            resultadosEl.classList.add('show-batch');
+        }
+        
+        const tbody = document.querySelector('#batch-results-table tbody');
+        if (tbody) {
+            tbody.innerHTML = '';
+        }
+
+        try {
+            if (typeof eel !== 'undefined') {
+                eel.start_batch_tests(solver, timeoutSeconds);
+            } else {
+                alert('Error: Eel no está disponible en este entorno.');
+                runAllTestsBtn.disabled = false;
+                if (calculatePlanBtn) calculatePlanBtn.disabled = false;
+                runAllTestsBtn.innerHTML = runAllOriginalContent;
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Error inesperado: ' + err);
+            runAllTestsBtn.disabled = false;
+            if (calculatePlanBtn) calculatePlanBtn.disabled = false;
+            runAllTestsBtn.innerHTML = runAllOriginalContent;
+        }
+    });
+}
+
+const copyJsonBtn = document.getElementById("copy-json-btn");
+if (copyJsonBtn) {
+    copyJsonBtn.addEventListener('click', async () => {
+        if (!latestBatchResults || latestBatchResults.length === 0) {
+            alert('No hay resultados para copiar.');
+            return;
+        }
+        
+        const solver = document.getElementById('solver-select').value;
+        const timeoutSeconds = parseFloat(document.getElementById('batch-timeout-input').value) || 30.0;
+        
+        const filtered = latestBatchResults.map(res => ({
+            instancia: res.instancia,
+            polarizacion: res.polarizacion,
+            tiempo_ejecucion_cpu: res.tiempo_ejecucion_cpu,
+            tiempo_solve: res.tiempo_solve
+        }));
+        
+        const outputJson = {
+            solver: solver,
+            tiempo_maximo_por_test: timeoutSeconds,
+            resultados: filtered
+        };
+        
+        const jsonText = JSON.stringify(outputJson, null, 4);
+        
+        try {
+            await navigator.clipboard.writeText(jsonText);
+            const originalHTML = copyJsonBtn.innerHTML;
+            copyJsonBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> ¡Copiado!';
+            copyJsonBtn.style.backgroundColor = 'var(--accent-green)';
+            copyJsonBtn.disabled = true;
+            setTimeout(() => {
+                copyJsonBtn.innerHTML = originalHTML;
+                copyJsonBtn.style.backgroundColor = '';
+                copyJsonBtn.disabled = false;
+            }, 2000);
+        } catch (err) {
+            console.error(err);
+            alert('Error al copiar al portapapeles: ' + err);
+        }
+    });
+}
+
+const copyIndividualJsonBtn = document.getElementById("copy-individual-json-btn");
+if (copyIndividualJsonBtn) {
+    copyIndividualJsonBtn.addEventListener('click', async () => {
+        if (!latestIndividualResult) {
+            alert('No hay resultados para copiar.');
+            return;
+        }
+        
+        const jsonText = JSON.stringify(latestIndividualResult, null, 4);
+        
+        try {
+            await navigator.clipboard.writeText(jsonText);
+            const originalHTML = copyIndividualJsonBtn.innerHTML;
+            copyIndividualJsonBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> ¡Copiado!';
+            copyIndividualJsonBtn.style.backgroundColor = 'var(--accent-green)';
+            copyIndividualJsonBtn.disabled = true;
+            setTimeout(() => {
+                copyIndividualJsonBtn.innerHTML = originalHTML;
+                copyIndividualJsonBtn.style.backgroundColor = '';
+                copyIndividualJsonBtn.disabled = false;
+            }, 2000);
+        } catch (err) {
+            console.error(err);
+            alert('Error al copiar al portapapeles: ' + err);
+        }
+    });
+}
 
 
 function setResultStatus(message) {
@@ -296,6 +544,49 @@ function parseMiniZincResponse(response) {
     }
 
     return result;
+}
+
+function extractMiniZincStatistics(response) {
+    const lines = response.split(/\r?\n/);
+    const statistics = [];
+    let insideStatistics = false;
+
+    for (const line of lines) {
+        const trimmed = line.trim();
+
+        if (!trimmed) {
+            if (insideStatistics && statistics.length > 0 && statistics[statistics.length - 1] !== '') {
+                statistics.push('');
+            }
+            continue;
+        }
+
+        if (trimmed === '%%%mzn-stat-end') {
+            insideStatistics = false;
+            continue;
+        }
+
+        if (trimmed.startsWith('%%%mzn-stat:')) {
+            insideStatistics = true;
+            statistics.push(trimmed.replace(/^%%%mzn-stat:\s*/, ''));
+            continue;
+        }
+
+        if (insideStatistics) {
+            statistics.push(trimmed);
+        }
+    }
+
+    return statistics.join('\n').trim();
+}
+
+function extractSolveTime(statisticsText) {
+    if (!statisticsText) return null;
+
+    const matches = [...statisticsText.matchAll(/solveTime=([\d.+\-eE]+)/g)];
+    if (matches.length === 0) return null;
+
+    return matches[matches.length - 1][1];
 }
 
 function parseArrayString(arrayString) {
@@ -421,10 +712,41 @@ function updateChart(labels, beforeData, afterData) {
     });
 }
 
-function updateResultsFromResponse(response, instanceName) {
-    document.querySelector('.resultados').classList.remove('empty-state');
+function updateResultsFromResponse(response, instanceName, cpuTime) {
+    const resultadosEl = document.querySelector('.resultados');
+    resultadosEl.classList.remove('empty-state');
+    resultadosEl.classList.remove('show-batch');
+    resultadosEl.classList.add('show-single');
     const statusEl = document.getElementById('result-status');
     if (statusEl) statusEl.style.display = 'none';
+
+    const statsPanel = document.getElementById('result-stats-card');
+    const statsContent = document.getElementById('solver-statistics');
+    const solveTimeWrapper = document.getElementById('solve-time-wrapper');
+    const solveTimeEl = document.getElementById('solve-time');
+    const statisticsText = extractMiniZincStatistics(response);
+    if (statsPanel && statsContent) {
+        if (statisticsText) {
+            statsContent.textContent = statisticsText;
+            statsPanel.style.display = 'block';
+        } else {
+            statsContent.textContent = '—';
+            statsPanel.style.display = 'none';
+        }
+    }
+
+    const solveTime = extractSolveTime(statisticsText);
+    const timeCard = document.getElementById('result-time-card');
+    if (solveTimeWrapper && solveTimeEl) {
+        if (solveTime) {
+            solveTimeEl.textContent = solveTime + ' s';
+            solveTimeWrapper.style.display = 'inline';
+            if (timeCard) timeCard.style.display = 'flex';
+        } else {
+            solveTimeEl.textContent = '—';
+            solveTimeWrapper.style.display = 'none';
+        }
+    }
 
     // Show instance name
     const instanceEl = document.getElementById('instance-name');
@@ -441,10 +763,6 @@ function updateResultsFromResponse(response, instanceName) {
 
     const beforeArray = parseArrayString(getValueTables('.distribution-opinion-table'));
     const afterArray = parsed.p_mod ? parseArrayString(parsed.p_mod) : [];
-    const moved = beforeArray.length === afterArray.length
-        ? beforeArray.reduce((sum, val, idx) => sum + Math.max(0, val - afterArray[idx]), 0)
-        : 'N/A';
-    updateResultCard('people-moved', moved);
 
     const { pArray, vArray, ceArray, cMatrix, n } = getCurrentCosts();
     const initialPolarization = calculatePolarization(pArray, vArray);
@@ -454,13 +772,49 @@ function updateResultsFromResponse(response, instanceName) {
     updateResultCard('polarization-reduction', reduction !== 'NaN' ? reduction : 'N/A');
 
     clearResultPlanTable();
+    let moved = 'N/A';
     if (parsed.x) {
         const moves = formatPlanFromX(parsed.x, pArray, cMatrix, ceArray, n);
         moves.forEach((move) => addResultPlanRow(move.origin, move.target, move.people, move.cost));
+        moved = moves.reduce((sum, move) => sum + move.people, 0);
     }
+    updateResultCard('people-moved', moved);
 
     const labels = beforeArray.map((_, index) => 'Op ' + (index + 1));
     updateChart(labels, beforeArray, afterArray);
+
+    // Save individual results as JSON object
+    latestIndividualResult = {
+        configuracion: {
+            instancia: instanceName,
+            solver: document.getElementById('solver-select').value,
+            numero_personas: n,
+            numero_opiniones: pArray.length,
+            presupuesto_maximo: Number(document.querySelector('.cost-total-input')?.value || 0),
+            max_movimientos: Number(document.querySelector('.number-max-mov-input')?.value || 0),
+            distribucion_inicial: pArray,
+            valores_opinion: vArray,
+            costos_extra: ceArray,
+            matriz_costos: cMatrix
+        },
+        resultados: {
+            polarizacion_inicial: Number(initialPolarization.toFixed(3)),
+            polarizacion_final: parsed.pol ? Number(Number(parsed.pol).toFixed(3)) : null,
+            reduccion_lograda: parsed.pol ? Number((initialPolarization - Number(parsed.pol)).toFixed(3)) : null,
+            reduccion_porcentaje: parsed.pol ? Number(((initialPolarization - Number(parsed.pol)) / initialPolarization * 100).toFixed(3)) : null,
+            costo_total_utilizado: parsed.costo_total ? Number(Number(parsed.costo_total).toFixed(4)) : null,
+            personas_movidas: moved !== 'N/A' ? moved : null,
+            tiempo_ejecucion_cpu: cpuTime !== undefined ? Number(cpuTime) : null,
+            tiempo_solve: solveTime ? Number(solveTime) : null,
+            plan_cambio: parsed.x ? formatPlanFromX(parsed.x, pArray, cMatrix, ceArray, n).map(move => ({
+                opinion_origen: move.origin,
+                opinion_destino: move.target,
+                personas_a_cambiar: move.people,
+                costo_parcial: Number(move.cost)
+            })) : [],
+            estadisticas_solver: statisticsText || null
+        }
+    };
 }
 
 function getCurrentCosts() {
