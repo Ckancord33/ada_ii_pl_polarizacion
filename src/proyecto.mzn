@@ -16,7 +16,7 @@ array [1..m] of float: ce; %costo extra de cada opinion si esta vacia
 array[1..m, 1..m] of float: costo; %costo de pasar de la opinion i a la opinion j
 
 % -----------------------------
-% VARIABLES DE DESICION
+% VARIABLES DE DECISION
 % -----------------------------
 
 array[1..m, 1..m] of var 0..n: x; %cuantas personas vamos a pasar de la opinion i a la j
