@@ -6,10 +6,6 @@ import json
 import re
 import threading
 
-
-
-
-
 def _format_dzn(n, m, p, v, ce, c_matrix, ct, max_movs):
 	p_str = "[" + ",".join(str(int(float(x))) for x in p) + "]"
 	v_str = "[" + ",".join(str(float(x)) for x in v) + "]"
@@ -25,7 +21,7 @@ def _format_dzn(n, m, p, v, ce, c_matrix, ct, max_movs):
 		f"p = {p_str};\n"
 		f"v = {v_str};\n"
 		f"ce = {ce_str};\n"
-		f"costo = {costo_str};\n"
+		f"c = {costo_str};\n"
 		f"ct = {float(ct)};\n"
 		f"MaxMovs = {int(float(max_movs))};"
 	)
@@ -154,7 +150,11 @@ def process_data(contenido: str, solver: str = 'SCIP') -> dict:
 		with open(dzn_path, 'w', encoding='utf-8') as f:
 			f.write(contenido)
 
-		cmd = ['minizinc', '--solver', solver, '--statistics', 'proyecto.mzn', 'DatosProyecto.dzn']
+		if(solver == 'org.gecode.gist'):
+			cmd = ['minizinc', '--solver', solver, 'proyecto.mzn', 'DatosProyecto.dzn']
+		else:
+			cmd = ['minizinc', '--solver', solver, '--statistics', 'proyecto.mzn', 'DatosProyecto.dzn']
+  
 		start = time.perf_counter()
 		proc = subprocess.run(cmd, cwd=src_dir, capture_output=True, text=True)
 		elapsed = time.perf_counter() - start

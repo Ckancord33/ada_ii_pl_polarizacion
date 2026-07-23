@@ -183,7 +183,7 @@ calculatePlanBtn.addEventListener('click',async() => {
 
     const ct = totalCostInput.value
 
-    const contenido = "n = " + n + ";\n" + "m = " + m + ";\n" + "p = " + p + ";\n" + "v = " + v + ";\n" + "ce = " + ce + ";\n" + "costo = " + costoMatrix + ";\n" + "ct = " + ct + ";\n" + "MaxMovs = " + maxM + ";"
+    const contenido = "n = " + n + ";\n" + "m = " + m + ";\n" + "p = " + p + ";\n" + "v = " + v + ";\n" + "ce = " + ce + ";\n" + "c = " + costoMatrix + ";\n" + "ct = " + ct + ";\n" + "MaxMovs = " + maxM + ";"
 
     const solver = document.getElementById('solver-select').value;
 
