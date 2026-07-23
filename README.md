@@ -15,10 +15,11 @@ El proyecto está organizado en las siguientes carpetas y archivos principales d
    Archivo de entrada en formato MiniZinc que contiene una instancia de datos de prueba para alimentar al modelo `proyecto.mzn`.
 
 3. **`src/DatosProyecto/`**  
-   Directorio que contiene las 30 instancias de prueba del proyecto en formato `.mpl`. Cada archivo `.mpl` contiene de manera estructurada los parámetros para simular el problema.
+   Directorio que contiene las 30 instancias de prueba del proyecto en formato `.mpl`. Cada archivo `.mpl` contiene de manera estructurada los parámetros para simular el problema y las 5 instancias personalizadas.
 
 4. **`src/MisInstancias/`**  
-   Directorio reservado para almacenar las 5 instancias personalizadas generadas por el equipo de trabajo para evaluar y retar la solución.
+   Directorio reservado para almacenar las 5 instancias personalizadas generadas por el equipo de trabajo para evaluar y retar la solución, en formato mpl y .dzn, además
+   del archivo gen_instances.py que fue utilizado para generar grandes instancias aleatorias.
 
 5. **`src/ProyectoGUIFuentes/`**  
    Contiene el código fuente de la interfaz gráfica desarrollada bajo el framework Eel (Python + HTML/CSS/JavaScript):
